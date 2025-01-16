@@ -84,10 +84,12 @@ export const updateUser = async (formData) => {
     Object.fromEntries(formData);
   try {
     connectToDB();
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
     const updatedFields = {
       username,
       email,
-      password,
+      password: hashedPassword,
       phone,
       address,
       isAdmin,
@@ -105,4 +107,31 @@ export const updateUser = async (formData) => {
 
   revalidatePath("/dashboard/users");
   redirect("/dashboard/users");
+};
+
+export const updateProduct = async (formData) => {
+  const { id, title, desc, price, stock, color, size } =
+    Object.fromEntries(formData);
+  try {
+    connectToDB();
+    const updatedFields = {
+      title,
+      desc,
+      price,
+      stock,
+      color,
+      size,
+    };
+    Object.keys(updatedFields).forEach(
+      (key) =>
+        (updatedFields[key] === "" || undefined) && delete updatedFields[key]
+    );
+    await Product.findByIdAndUpdate(id, updatedFields);
+  } catch (error) {
+    console.log(error);
+    throw new Error("Failed to update product");
+  }
+
+  revalidatePath("/dashboard/products");
+  redirect("/dashboard/products");
 };
